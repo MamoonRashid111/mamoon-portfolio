@@ -120,20 +120,71 @@ document.addEventListener('DOMContentLoaded', () => {
     const formStatus = document.getElementById('form-status');
 
     if (contactForm) {
-        contactForm.addEventListener('submit', (e) => {
+        contactForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const message = document.getElementById('message').value.trim();
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const messageInput = document.getElementById('message');
+            const submitButton = contactForm.querySelector('button[type="submit"]');
 
-            const subject = encodeURIComponent(`Portfolio Contact from ${name}`);
-            const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const message = messageInput.value.trim();
 
-            window.location.href = `mailto:mamoonkhattak999@gmail.com?subject=${subject}&body=${body}`;
+            if (!name || !email || !message) {
+                if (formStatus) {
+                    formStatus.textContent = 'Please fill in your name, email, and message.';
+                    formStatus.className = 'mt-4 text-sm text-red-400';
+                }
+                return;
+            }
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Sending...';
+            }
 
             if (formStatus) {
-                formStatus.textContent = 'Opening your email app...';
+                formStatus.textContent = 'Sending your message...';
+                formStatus.className = 'mt-4 text-sm text-gray-400';
+            }
+
+            try {
+                const response = await fetch('https://formsubmit.co/ajax/mamoonkhattak999@gmail.com', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        message,
+                        _subject: `Portfolio Contact from ${name}`,
+                        _captcha: 'false'
+                    })
+                });
+
+                if (response.ok) {
+                    contactForm.reset();
+                    if (formStatus) {
+                        formStatus.textContent = 'Thanks! Your message has been sent successfully.';
+                        formStatus.className = 'mt-4 text-sm text-green-400';
+                    }
+                } else {
+                    throw new Error('Unable to send message');
+                }
+            } catch (error) {
+                if (formStatus) {
+                    formStatus.textContent = 'Something went wrong. Please email me directly at mamoonkhattak999@gmail.com.';
+                    formStatus.className = 'mt-4 text-sm text-red-400';
+                }
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Send Message';
+                }
             }
         });
     }
